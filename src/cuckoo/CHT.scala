@@ -4,6 +4,8 @@ import scala.collection.mutable.Map
 
 class CHT[K,V] (alloc : Int) extends Map[K,V] {
 
+  val MAX_UPDATE_RECURSION=100
+
   /** How many hash functions? */
   val H = 2
   /** Bin size for each hash function. */
@@ -43,7 +45,9 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     None
   }
 
-  def update (key:K, value:V) : Unit = {
+  def update(key:K, value:V) = update(key, value, 0);
+
+  def update (key:K, value:V, depth:Int) : Unit = {
     val hcode = key.hashCode
 
     for (hash <- hashes) {
@@ -61,6 +65,14 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     }
 
     // bin is full. so we:
+    // check for excessive recursion
+    if (depth > MAX_UPDATE_RECURSION) {
+      throw new RuntimeException ("Failed to insert after " + MAX_UPDATE_RECURSION +
+                                    " attempts");
+      // TODO: would be nice to report the original update params which caused
+      // the failure.
+    }
+
     // - select a bin at random
     val binIdx = hashes(rand.nextInt(B)) (hcode)
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
@@ -73,7 +85,7 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     table(binIdx+B-1) = (key,value)
     // - recursively insert (k,v) into the table.
    _size = _size+1
-    update (oldEntry._1, oldEntry._2)
+    update (oldEntry._1, oldEntry._2, depth+1)
   }
 
   def size () = _size
