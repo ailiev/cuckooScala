@@ -10,7 +10,7 @@ import scala.util.logging._
 import scala.collection.immutable.LongMap
 import scala.collection.immutable.Map
 
-object MapSpecification extends Commands with ConsoleLogger {
+object MapSpecification extends Commands with util.Slf4JLogger {
 
   // This is our system under test. All commands run against this instance.
   val htable:scala.collection.mutable.Map[Long,Int] =
@@ -39,9 +39,9 @@ object MapSpecification extends Commands with ConsoleLogger {
   // system under test is in a correct state after the command exectution.
 
   case class Put(key:Long, value:Int) extends Command {
-	log(this.toString)
+	debug(this.toString)
 
-    def run(s: State) = { log("Doing " + this); htable.update(key, value) }
+    def run(s: State) = { info("Doing " + this); htable.update(key, value) }
 
     def nextState(s: State) = State(s.mappings.update(key, value))
 
@@ -54,9 +54,9 @@ object MapSpecification extends Commands with ConsoleLogger {
   }
 
   case class Get(key:Long) extends Command {
-	log(this.toString)
+	debug(this.toString)
 
-    def run(s: State) = { log("Doing " + this); htable.get(key) }
+    def run(s: State) = { info("Doing " + this); htable.get(key) }
     def nextState(s: State) = s
 
     postConditions += {

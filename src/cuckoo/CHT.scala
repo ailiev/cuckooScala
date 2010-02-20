@@ -4,16 +4,18 @@ import scala.collection.mutable.Map
 import scala.util.logging.Logged
 import Math.abs
 
+import util.Slf4JLogger
+
 import java.util.Arrays
 
-class CHT[K,V] (alloc : Int) extends Map[K,V] with Logged {
+class CHT[K,V] (alloc : Int) extends Map[K,V] with Slf4JLogger {
 
   val MAX_UPDATE_RECURSION=100
 
   /** How many hash functions? */
   val H = 2
   /** Bin size for each hash function. */
-  val B = 2
+  val B = 4
 
   val rand = new scala.util.Random
 
@@ -21,8 +23,8 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] with Logged {
   val As = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
   val Bs = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
 
-  log("As = " + Arrays.toString(As));
-  log("Bs = " + Arrays.toString(Bs));
+  debug("As = " + Arrays.toString(As));
+  debug("Bs = " + Arrays.toString(Bs));
 
   val hashes = new Array[(Int => Int)] (H)
 
@@ -79,17 +81,24 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] with Logged {
     // bin is full. so we:
     // check for excessive recursion
     if (depth > MAX_UPDATE_RECURSION) {
-      throw new RuntimeException ("Failed to insert after " + MAX_UPDATE_RECURSION +
-                                    " attempts");
+      val msg = "Failed to insert after " + MAX_UPDATE_RECURSION +
+                " attempts. Table size is " +  _size
+      info(msg)
+      throw new RuntimeException (msg);
       // TODO: would be nice to report the original update params which caused
       // the failure.
     }
 
-    // - select a bin at random
-    val binIdx = binStartIdx ( hashes(rand.nextInt(B)) (hcode) )
+    if (_size > 0.9*alloc) {
+      warn("Inserting into a almost full table with size {} and alloc {}",
+           _size, alloc)
+    }
+
+    // - select a bin at random, ie. using one of our hash functions at random
+    val binIdx = binStartIdx ( hashes(rand.nextInt(H)) (hcode) )
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
     val oldEntry = table(binIdx)
-    log ("Evicting " + oldEntry + " while inserting " + (key,value))
+    debug ("Evicting " + oldEntry + " while inserting " + (key,value))
     // - slide the other entries up
     for (i <- 0 until B-1) {
       table(binIdx+i) = table(binIdx+i+1)
@@ -102,16 +111,31 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] with Logged {
 
   def size () = _size
 
-  def elements = null
+  def elements = table.elements.filter { _ ne null }
 
   def -= (key : K) : Unit = {
-    throw new UnsupportedOperationException("-=" + key)
+    // code is almost the same as get(), but do not want to abstract it to avoid
+    // runtime overhead.
+    val hcode = key.hashCode
+    for (hash <- hashes) {
+      val binStart = binStartIdx( hash(hcode) )
+      // go through the bins
+      for (i <- binStart until binStart+B) {
+        val tableVal = table(i)
+        if ((tableVal ne null) && tableVal._1 == key) {
+          // here is the only difference from get()
+          table(i) = null
+          return
+        }
+      }
+    }
   }
 
   override def clear  : Unit = {
     for (i <- 0 until table.size) {
       table(i) = null
     }
+    _size = 0
   }
 
 }
