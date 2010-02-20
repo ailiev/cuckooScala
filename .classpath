@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="ch.epfl.lamp.sdt.launching.SCALA_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/sasho/lib/scalaz-4.0-p2-2.8.jar"/>
 	<classpathentry kind="lib" path="/home/sasho/lib/scalacheck_2.7.7-1.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

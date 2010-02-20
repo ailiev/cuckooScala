@@ -45,9 +45,9 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     None
   }
 
-  def update(key:K, value:V) = update(key, value, 0);
+  def update(key:K, value:V) = updateHelper(key, value, 0);
 
-  def update (key:K, value:V, depth:Int) : Unit = {
+  def updateHelper (key:K, value:V, depth:Int) : Unit = {
     val hcode = key.hashCode
 
     for (hash <- hashes) {
@@ -84,8 +84,7 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     // - insert the new (key,value) at the end of the bin
     table(binIdx+B-1) = (key,value)
     // - recursively insert (k,v) into the table.
-   _size = _size+1
-    update (oldEntry._1, oldEntry._2, depth+1)
+    updateHelper (oldEntry._1, oldEntry._2, depth+1)
   }
 
   def size () = _size
@@ -95,9 +94,15 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   def -= (key : K) : Unit = {
     throw new UnsupportedOperationException("-=" + key)
   }
+
+  override def clear  : Unit = {
+    for (i <- 0 to table.size) {
+      table(i) = null
+    }
+  }
+
 }
 
 object Utils
 {
-
 }
