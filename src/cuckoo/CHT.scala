@@ -27,16 +27,16 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   for (i <- 0 until H) {
     // Dietzfelbinger strongly universal hash function, really a small variation on
     // a standard multiplicative hash
-    hashes(i) = x => ( ( As(i) * x.toLong + Bs(i) ) >> 32 ).toInt
+    hashes(i) = x => ( ( As(i) * x.toLong + Bs(i) ) >> 32 ).toInt % (alloc/B)
   }
 
 
   def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
     for (hash <- hashes) {
-      val h = hash(hcode)
+      val binStart = hash(hcode) * B
       // go through the bins
-      for (i <- h until h+B) {
+      for (i <- binStart until binStart+B) {
         val tableVal = table(i)
         if ((tableVal ne null) && tableVal._1 == key) return Some (tableVal._2)
       }
@@ -51,9 +51,9 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     val hcode = key.hashCode
 
     for (hash <- hashes) {
-      val h = hash(hcode)
+      val binStart = hash(hcode) * B
       // go through the bins
-      for (i <- h until h+B) {
+      for (i <- binStart until binStart+B) {
         val tableVal = table(i)
         if ( (tableVal eq null) || (tableVal._1 == key) ) {
           // found either empty slot or same key, so set new value here and we're done.
@@ -96,7 +96,7 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   }
 
   override def clear  : Unit = {
-    for (i <- 0 to table.size) {
+    for (i <- 0 until table.size) {
       table(i) = null
     }
   }
