@@ -5,13 +5,16 @@ import org.scalacheck.Gen
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
 
+import scala.util.logging._
+
 import scala.collection.immutable.LongMap
 import scala.collection.immutable.Map
 
-object MapSpecification extends Commands {
+object MapSpecification extends Commands with ConsoleLogger {
 
   // This is our system under test. All commands run against this instance.
-  val htable:scala.collection.mutable.Map[Long,Int] = new CHT[Long,Int](20000)
+  val htable:scala.collection.mutable.Map[Long,Int] =
+    new CHT[Long,Int](55) with ConsoleLogger;
 
   // This is our state type that encodes the abstract state. The abstract state
   // should model all the features we need from the real state, the system
@@ -36,9 +39,9 @@ object MapSpecification extends Commands {
   // system under test is in a correct state after the command exectution.
 
   case class Put(key:Long, value:Int) extends Command {
-	println(this)
-   
-    def run(s: State) = { println("Doing " + this); htable.update(key, value) }
+	log(this.toString)
+
+    def run(s: State) = { log("Doing " + this); htable.update(key, value) }
 
     def nextState(s: State) = State(s.mappings.update(key, value))
 
@@ -51,9 +54,9 @@ object MapSpecification extends Commands {
   }
 
   case class Get(key:Long) extends Command {
-	println(this)
+	log(this.toString)
 
-    def run(s: State) = { println("Doing " + this); htable.get(key) }
+    def run(s: State) = { log("Doing " + this); htable.get(key) }
     def nextState(s: State) = s
 
     postConditions += {

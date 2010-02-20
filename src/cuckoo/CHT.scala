@@ -1,11 +1,12 @@
 package cuckoo;
 
 import scala.collection.mutable.Map
+import scala.util.logging.Logged
 import Math.abs
 
 import java.util.Arrays
 
-class CHT[K,V] (alloc : Int) extends Map[K,V] {
+class CHT[K,V] (alloc : Int) extends Map[K,V] with Logged {
 
   val MAX_UPDATE_RECURSION=100
 
@@ -20,8 +21,8 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   val As = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
   val Bs = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
 
-  println("As = " + Arrays.toString(As));
-  println("Bs = " + Arrays.toString(Bs));
+  log("As = " + Arrays.toString(As));
+  log("Bs = " + Arrays.toString(Bs));
 
   val hashes = new Array[(Int => Int)] (H)
 
@@ -30,18 +31,22 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
 
   var _size = 0
 
+  val NUM_BUCKETS = alloc/B	// integer division rounds down.
+
   for (i <- 0 until H) {
     // Dietzfelbinger strongly universal hash function, really a small variation on
     // a standard multiplicative hash
       // we have the hash return the bucket number.
-    hashes(i) = x => ( ( ( As(i) * x.abs.toLong + Bs(i) ) >>> 32 ).toInt % alloc ) / B
+    hashes(i) = x => ( ( As(i) * x.abs.toLong + Bs(i) ) >>> 32 ).toInt % NUM_BUCKETS
   }
+
+  def binStartIdx (hashValue:Int) = hashValue * B
 
 
   def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
     for (hash <- hashes) {
-      val binStart = hash(hcode) * B
+      val binStart = binStartIdx( hash(hcode) )
       // go through the bins
       for (i <- binStart until binStart+B) {
         val tableVal = table(i)
@@ -54,11 +59,11 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
 
   def update(key:K, value:V) = updateHelper(key, value, 0);
 
-  def updateHelper (key:K, value:V, depth:Int) : Unit = {
+  private def updateHelper (key:K, value:V, depth:Int) : Unit = {
     val hcode = key.hashCode
 
     for (hash <- hashes) {
-      val binStart = hash(hcode) * B
+      val binStart = binStartIdx(hash(hcode))
       // go through the bins
       for (i <- binStart until binStart+B) {
         val tableVal = table(i)
@@ -81,9 +86,10 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
     }
 
     // - select a bin at random
-    val binIdx = hashes(rand.nextInt(B)) (hcode)
+    val binIdx = binStartIdx ( hashes(rand.nextInt(B)) (hcode) )
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
     val oldEntry = table(binIdx)
+    log ("Evicting " + oldEntry + " while inserting " + (key,value))
     // - slide the other entries up
     for (i <- 0 until B-1) {
       table(binIdx+i) = table(binIdx+i+1)
