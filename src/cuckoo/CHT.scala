@@ -1,6 +1,9 @@
 package cuckoo;
 
 import scala.collection.mutable.Map
+import Math.abs
+
+import java.util.Arrays
 
 class CHT[K,V] (alloc : Int) extends Map[K,V] {
 
@@ -14,8 +17,11 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   val rand = new scala.util.Random
 
   // the randomizing params for the hash functions.
-  val As = Array (rand.nextLong,rand.nextLong,rand.nextLong,rand.nextLong)
-  val Bs = Array (rand.nextLong,rand.nextLong,rand.nextLong,rand.nextLong)
+  val As = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
+  val Bs = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
+
+  println("As = " + Arrays.toString(As));
+  println("Bs = " + Arrays.toString(Bs));
 
   val hashes = new Array[(Int => Int)] (H)
 
@@ -27,7 +33,8 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] {
   for (i <- 0 until H) {
     // Dietzfelbinger strongly universal hash function, really a small variation on
     // a standard multiplicative hash
-    hashes(i) = x => ( ( As(i) * x.toLong + Bs(i) ) >> 32 ).toInt % (alloc/B)
+      // we have the hash return the bucket number.
+    hashes(i) = x => ( ( ( As(i) * x.abs.toLong + Bs(i) ) >>> 32 ).toInt % alloc ) / B
   }
 
 

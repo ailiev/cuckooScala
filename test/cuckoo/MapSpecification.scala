@@ -10,8 +10,6 @@ import scala.collection.immutable.Map
 
 object MapSpecification extends Commands {
 
-  val rand = new scala.util.Random
-
   // This is our system under test. All commands run against this instance.
   val htable:scala.collection.mutable.Map[Long,Int] = new CHT[Long,Int](20000)
 
@@ -38,8 +36,9 @@ object MapSpecification extends Commands {
   // system under test is in a correct state after the command exectution.
 
   case class Put(key:Long, value:Int) extends Command {
-
-    def run(s: State) = htable.update(key, value)
+	println(this)
+   
+    def run(s: State) = { println("Doing " + this); htable.update(key, value) }
 
     def nextState(s: State) = State(s.mappings.update(key, value))
 
@@ -52,7 +51,9 @@ object MapSpecification extends Commands {
   }
 
   case class Get(key:Long) extends Command {
-    def run(s: State) = htable.get(key)
+	println(this)
+
+    def run(s: State) = { println("Doing " + this); htable.get(key) }
     def nextState(s: State) = s
 
     postConditions += {
