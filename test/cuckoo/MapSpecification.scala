@@ -10,10 +10,12 @@ import scala.util.logging._
 import scala.collection.immutable.LongMap
 import scala.collection.immutable.Map
 
+import scala.collection.mutable.{Map => MutableMap}
+
 object MapSpecification extends Commands with util.Slf4JLogger {
 
   // This is our system under test. All commands run against this instance.
-  val htable:scala.collection.mutable.Map[Long,Int] =
+  val htable:MutableMap[Long,Int] =
     new CHT[Long,Int](55) with ConsoleLogger;
 
   // This is our state type that encodes the abstract state. The abstract state
@@ -65,6 +67,16 @@ object MapSpecification extends Commands with util.Slf4JLogger {
     }
   }
 
+  case class Remove(key:Long) extends Command {
+    def run(s: State)       = { info("Doing {}", this); htable -= key; htable }
+    def nextState(s: State) = State(s.mappings - key)
+
+    postConditions += {
+      case (s0, s1, table:MutableMap[Long,Int]) => ! table.contains(key)
+      case _                                    => false
+    }
+  }
+
   // This is our command generator. Given an abstract state, the generator
   // should return a command that is allowed to run in that state. Note that
   // it is still neccessary to define preconditions on the commands if there
@@ -74,33 +86,39 @@ object MapSpecification extends Commands with util.Slf4JLogger {
   // your command generator according to the state, or do other calculations
   // based on the state.
   def genCommand(s: State): Gen[Command] =
-    Gen.oneOf(genCommand_get(s.mappings),
-              genCommand_put(s.mappings))
+    Gen.frequency( (10, genCommand_get(s.mappings)),
+                   (10, genCommand_put(s.mappings)),
+                   (1,  genCommand_remove(s.mappings)) )
 
   def genCommand_get (mappings:Map[Long,Int]) : Gen[Get] =
-    frequency ( (19, genKey(mappings).map(Get)),
-                (1,  randGet) )
+    frequency ( (19, genExistingKey(mappings).map(Get)),
+                (1,  genKey.map(Get)) )
 
-  def genCommand_put (mappings:Map[Long,Int]) : Gen[Put] = {
+  def genCommand_put (mappings:Map[Long,Int]) : Gen[Put] =
     frequency ( (9, randPut),
     			(1, repeatPut(mappings)) )
-  }
+
+  def genCommand_remove (mappings:Map[Long,Int]) : Gen[Remove] =
+    frequency ( (19, genExistingKey(mappings).map(Remove)),
+                (1,  genKey.map(Remove)) )
 
   def randPut = for {
-    key <- choose(0, 1234567890l)
-    value <- choose(-234567, 3456789)
+    key <- genKey
+    value <- genValue
   } yield (Put(key,value))
 
-  def randGet = for (key <- choose(0, 1234567890l)) yield (Get(key))
+  // scalacheck doesn't want to work with the whole number range, so trimming it some.
+  def genKey = choose(Math.MIN_LONG/4, Math.MAX_LONG/2)
+  def genValue = choose(Math.MIN_INT/4, Math.MAX_INT/2)
 
   /** An update of a random existing key */
   def repeatPut (mappings:Map[Long,Int]) = for {
-      key <- genKey(mappings)
-      value <- choose(-234567, 3456789)
+      key <- genExistingKey(mappings)
+      value <- genValue
   } yield (Put(key,value))
 
   /** A random key from the given map */
-  def genKey[T] (mappings:Map[T,_]) = oneOf(mappings.keySet.toArray)
+  def genExistingKey[T] (mappings:Map[T,_]) = oneOf(mappings.keySet.toArray)
 
   // a variation of Gen.oneOf
   def oneOf[T](gs: Seq[T]) = if(gs.isEmpty) fail else for {
