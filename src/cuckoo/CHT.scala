@@ -124,14 +124,19 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] with Slf4JLogger {
         val tableVal = table(i)
         if ((tableVal ne null) && tableVal._1 == key) {
           // here is the only difference from get()
-          table(i) = null
+          // slide the subsequent entries in the bin down
+          for (j <- i until binStart+B-1) {
+        	  table(j) = table(j+1)
+          }
+          // the last bin entry will be empty
+          table(binStart+B-1) = null
           return
         }
       }
     }
   }
 
-  override def clear  : Unit = {
+  override def clear = {
     for (i <- 0 until table.size) {
       table(i) = null
     }
