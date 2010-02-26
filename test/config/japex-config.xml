@@ -1,0 +1,20 @@
+<testSuite name="Scala mutable map test suite"
+           xmlns="http://www.sun.com/japex/testSuite">
+
+  <param name="libraryDir" value="lib"/>
+  <param name="japex.classPath" value="${libraryDir}/../dist/classes"/>
+
+  <param name="japex.warmupTime" value="10"/>
+  <param name="japex.runTime" value="40"/>
+
+  <driver name="Get">
+    <param name="Description" value="Driver for map lookups"/>
+    <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
+  </driver>
+
+  <testCase name="small map">
+    <param name="tableCapacity" value="200"/>
+    <param name="timedBatchSize" value="100" />
+  </testCase>
+
+</testSuite>
