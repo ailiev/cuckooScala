@@ -8,7 +8,9 @@ import util.Slf4JLogger
 
 import java.util.Arrays
 
-class CHT[K,V] (alloc : Int) extends Map[K,V] with Slf4JLogger {
+class CHT[K,V] (alloc : Int)
+extends Map[K,V] with Slf4JLogger
+{
 
   val MAX_UPDATE_RECURSION=100
 
@@ -47,11 +49,18 @@ class CHT[K,V] (alloc : Int) extends Map[K,V] with Slf4JLogger {
 
   def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
-    for (hash <- hashes) {
+
+    var i=0
+    while(i < hashes.size) {
+      val hash = hashes(i)
+      i = i+1
       val binStart = binStartIdx( hash(hcode) )
+
       // go through the bins
-      for (i <- binStart until binStart+B) {
-        val tableVal = table(i)
+      var binOff = 0
+      while (binOff < B) {
+        val tableVal = table(binStart+binOff)
+        binOff = binOff+1
         if ((tableVal ne null) && tableVal._1 == key) return Some (tableVal._2)
       }
     }
