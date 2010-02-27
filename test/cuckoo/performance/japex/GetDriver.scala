@@ -3,9 +3,11 @@ package cuckoo.performance.japex
 import com.sun.japex.JapexDriverBase;
 import com.sun.japex.TestCase;
 
+import util.Slf4JLogger
+
 import scala.collection.mutable.{Map => MutableMap}
 
-class GetDriver extends JapexDriverBase
+class GetDriver extends JapexDriverBase with Slf4JLogger
 {
   var capacity : Int = 0
   var timedBatchSize : Int = 0
@@ -25,15 +27,19 @@ class GetDriver extends JapexDriverBase
       capacity = testcase.getIntParam("tableCapacity")
       timedBatchSize = testcase.getIntParam("timedBatchSize")
 
+      info("Using capacity {} and batch size {}",
+      		capacity, timedBatchSize)
+
       htable = new CHT(capacity)
 
-      // fill up the table.
-      for (i <- 0 until (capacity*9)/10) {
-        htable.update(rand.nextLong, rand.nextInt)
-      }
+      keys = new Array(capacity)
 
-      keys = Array(capacity)
-      htable.keys.readInto(keys)
+      // fill up the table and the keys array
+      for (i <- 0 until (capacity*9)/10) {
+        val key = rand.nextLong
+        htable.update(key, rand.nextInt)
+        keys(i) = key
+      }
     }
 
   override def run (testcase : TestCase) : Unit =

@@ -2,12 +2,15 @@
            xmlns="http://www.sun.com/japex/testSuite">
 
   <param name="libraryDir" value="lib"/>
-  <param name="japex.classPath" value="${libraryDir}/../dist/classes"/>
+  <param name="japex.classPath" value="bin"/>
+  <param name="japex.classPath" value="/kebab/minime/eclipse/configuration/org.eclipse.osgi/bundles/220/1/.cp/lib/scala-library.jar"/>
+  <param name="japex.classPath" value="/home/sasho/lib/slf4j-api-1.5.10.jar"/>
+  <param name="japex.classPath" value="/home/sasho/lib/slf4j-jdk14-1.5.10.jar"/>
 
   <param name="japex.warmupTime" value="10"/>
   <param name="japex.runTime" value="40"/>
 
-  <driver name="Get">
+  <driver name="cuckoo.performance.japex.GetDriver">
     <param name="Description" value="Driver for map lookups"/>
     <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
   </driver>
