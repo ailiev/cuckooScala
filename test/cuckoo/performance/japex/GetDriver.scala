@@ -7,7 +7,7 @@ import util.Slf4JLogger
 
 import scala.collection.mutable.{Map => MutableMap}
 
-class GetDriver extends JapexDriverBase with Slf4JLogger
+abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 {
   var capacity : Int = 0
   var timedBatchSize : Int = 0
@@ -18,9 +18,8 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
 
   var keys : Array[Long] = null
 
-  var keyIdx = 0
-
-  var goldPot : Int = 0
+  def makeMap (capacity : Int, loadFactor : Float) :
+    MutableMap[Long,Int]
 
   override def prepare (testcase : TestCase) : Unit =
     {
@@ -32,11 +31,7 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
       info("Using capacity {} and batch size {}",
       		capacity, timedBatchSize)
 
-      htable = mapImpl match
-        { case "cuckoo"	=> new CHT(capacity)
-          case "java.util.HashMap" =>
-            new scala.collection.jcl.HashMap(new java.util.HashMap(capacity, loadFactor.toFloat))
-          }
+      htable = makeMap (capacity, loadFactor.toFloat)
 
       keys = new Array(capacity)
 
@@ -52,13 +47,15 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
 
   override def run (testcase : TestCase) : Unit =
     {
+      var keyIdx = rand.nextInt(keys.size)
+      var goldPot = 0
       var i=0
       while ( i < timedBatchSize ) {
 
         val value = htable.get(keys(keyIdx))
 
         goldPot = goldPot + value.getOrElse(0)
-    	keyIdx = (keyIdx+1)%capacity
+    	keyIdx = (keyIdx + 1) % capacity
     	i = i+1
       }
     }

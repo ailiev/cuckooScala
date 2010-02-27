@@ -11,7 +11,14 @@
   <param name="japex.runTime" value="40"/>
 
   <!-- looks like the driver name has to be the class name -->
-  <driver name="cuckoo.performance.japex.GetDriver">
+  <driver name="cuckoo.performance.japex.CuckooGetDriver">
+    <param name="Description" value="Driver for map lookups"/>
+    <!--
+    <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
+    -->
+  </driver>
+
+  <driver name="cuckoo.performance.japex.JavaHashMapGetDriver">
     <param name="Description" value="Driver for map lookups"/>
     <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
   </driver>
@@ -19,14 +26,8 @@
     <param name="timedBatchSize" value="500" />
     <param name="loadFactor" value="0.92" />    
 
-  <testCase name="medium cuckoo">
+  <testCase name="medium size">
     <param name="tableCapacity" value="20000"/>
-    <param name="mapImpl" value="cuckoo" />
-  </testCase>
-
-  <testCase name="medium j.u.HashMap">
-    <param name="tableCapacity" value="20000"/>
-    <param name="mapImpl" value="java.util.HashMap" />
   </testCase>
 
 </testSuite>
