@@ -12,6 +12,7 @@ import scala.collection.immutable.Map
 
 import scala.collection.mutable.{Map => MutableMap}
 
+/** ScalaCheck specification for a mutable Scala map. */
 object MapSpecification extends Commands with util.Slf4JLogger {
 
   // This is our system under test. All commands run against this instance.

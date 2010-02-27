@@ -10,8 +10,8 @@ import scala.collection.mutable.{Map => MutableMap}
 
 import net.sourceforge.sizeof.SizeOf
 
-
- abstract class GetDriver extends JapexDriverBase with Slf4JLogger
+/** Japex driver for testing the get() method of a Scala mutable map. */
+abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 {
   var capacity : Int = 0
   var timedBatchSize : Int = 0
@@ -22,6 +22,7 @@ import net.sourceforge.sizeof.SizeOf
 
   var keys : Array[Long] = null
 
+  /** Subclass should define how to make the particular map. */
   def makeMap (capacity : Int, loadFactor : Float) :
     MutableMap[Long,Int]
 

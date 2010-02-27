@@ -1,5 +1,6 @@
 package cuckoo
 
+/** Small runner for the Map ScalaCheck spec */
 object RunSpec extends Application {  
   import org.scalacheck._  
   import org.scalacheck.Test._  
