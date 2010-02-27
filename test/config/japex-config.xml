@@ -10,14 +10,23 @@
   <param name="japex.warmupTime" value="10"/>
   <param name="japex.runTime" value="40"/>
 
+  <!-- looks like the driver name has to be the class name -->
   <driver name="cuckoo.performance.japex.GetDriver">
     <param name="Description" value="Driver for map lookups"/>
     <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
   </driver>
 
-  <testCase name="small map">
+  <testCase name="small cuckoo">
     <param name="tableCapacity" value="200"/>
     <param name="timedBatchSize" value="100" />
+    <param name="mapImpl" value="cuckoo" />
   </testCase>
+  
+  <testCase name="small j.u.HashMap">
+    <param name="tableCapacity" value="200"/>
+    <param name="timedBatchSize" value="100" />
+    <param name="mapImpl" value="java.util.HashMap" />
+  </testCase>
+  
 
 </testSuite>

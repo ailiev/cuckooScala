@@ -26,11 +26,16 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
     {
       capacity = testcase.getIntParam("tableCapacity")
       timedBatchSize = testcase.getIntParam("timedBatchSize")
+      val mapImpl = testcase.getParam("mapImpl")
 
       info("Using capacity {} and batch size {}",
       		capacity, timedBatchSize)
 
-      htable = new CHT(capacity)
+      htable = mapImpl match
+        { case "cuckoo"	=> new CHT(capacity)
+          case "java.util.HashMap" =>
+            new scala.collection.jcl.HashMap(new java.util.HashMap(capacity))
+          }
 
       keys = new Array(capacity)
 
