@@ -16,17 +16,17 @@
     <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
   </driver>
 
-  <testCase name="small cuckoo">
-    <param name="tableCapacity" value="200"/>
-    <param name="timedBatchSize" value="100" />
+    <param name="timedBatchSize" value="500" />
+    <param name="loadFactor" value="0.92" />    
+
+  <testCase name="medium cuckoo">
+    <param name="tableCapacity" value="20000"/>
     <param name="mapImpl" value="cuckoo" />
   </testCase>
-  
-  <testCase name="small j.u.HashMap">
-    <param name="tableCapacity" value="200"/>
-    <param name="timedBatchSize" value="100" />
+
+  <testCase name="medium j.u.HashMap">
+    <param name="tableCapacity" value="20000"/>
     <param name="mapImpl" value="java.util.HashMap" />
   </testCase>
-  
 
 </testSuite>

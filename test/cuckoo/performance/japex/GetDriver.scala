@@ -27,6 +27,7 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
       capacity = testcase.getIntParam("tableCapacity")
       timedBatchSize = testcase.getIntParam("timedBatchSize")
       val mapImpl = testcase.getParam("mapImpl")
+      val loadFactor = testcase.getDoubleParam("loadFactor")
 
       info("Using capacity {} and batch size {}",
       		capacity, timedBatchSize)
@@ -34,13 +35,15 @@ class GetDriver extends JapexDriverBase with Slf4JLogger
       htable = mapImpl match
         { case "cuckoo"	=> new CHT(capacity)
           case "java.util.HashMap" =>
-            new scala.collection.jcl.HashMap(new java.util.HashMap(capacity))
+            new scala.collection.jcl.HashMap(new java.util.HashMap(capacity, loadFactor.toFloat))
           }
 
       keys = new Array(capacity)
 
       // fill up the table and the keys array
-      for (i <- 0 until (capacity*9)/10) {
+      val numKeys = (capacity.toDouble*loadFactor*0.98).toInt
+      info ("Using map entries: " + numKeys)
+      for (i <- 0 until numKeys) {
         val key = rand.nextLong
         htable.update(key, rand.nextInt)
         keys(i) = key
