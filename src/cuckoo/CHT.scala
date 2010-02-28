@@ -65,19 +65,55 @@ extends Map[K,V] with Slf4JLogger
     var i=0
     while(i < hashes.size) {
       val hash = hashes(i)
-      i = i+1
       val binStart = binStartIdx( hash(hcode) )
 
       // go through the bins
       var binOff = 0
       while (binOff < B) {
         val tableVal = table(binStart+binOff)
-        binOff = binOff+1
         if ((tableVal ne null) && tableVal._1 == key) return Some (tableVal._2)
+        binOff = binOff+1
       }
+      i = i+1
     }
 
     None
+  }
+
+  /**
+   * @return Some(idx, binStartIdx) if key is found.
+   * 			Some(-1, emptySlotIdx) if not found,
+   * 				and 'findEmpty' is true, and an empty slot for that key is available
+   * 			None if not found and no empty slot requested or available.
+   */
+  private def findIndex
+  (key : K, hashcode : Int, findEmpty:Boolean) : Option[(Int,Int)] =
+    {
+    var emptySlotIdx : Int = -1
+    var i=0
+    while(i < hashes.size) {
+      val hash = hashes(i)
+      val binStart = binStartIdx( hash(hashcode) )
+
+      // go through the bins
+      var binOff = 0
+      while (binOff < B) {
+        val idx = binStart+binOff
+        val tableVal = table(idx)
+        if ((tableVal ne null) && tableVal._1 == key) return Some (idx, binStart)
+        if (findEmpty && emptySlotIdx == -1 && (tableVal eq null)) {
+          // we use the first available empty slot when inserting
+          emptySlotIdx = idx
+        }
+        binOff = binOff+1
+      }
+      i = i+1
+    }
+
+    emptySlotIdx match {
+      case -1 => None
+      case _  => Some(-1, emptySlotIdx)
+    }
   }
 
   def update(key:K, value:V) = updateHelper(key, value, 0);
@@ -85,18 +121,19 @@ extends Map[K,V] with Slf4JLogger
   private def updateHelper (key:K, value:V, depth:Int) : Unit = {
     val hcode = key.hashCode
 
-    for (hash <- hashes) {
-      val binStart = binStartIdx(hash(hcode))
-      // go through the bins
-      for (i <- binStart until binStart+B) {
-        val tableVal = table(i)
-        if ( (tableVal eq null) || (tableVal._1 == key) ) {
-          // found either empty slot or same key, so set new value here and we're done.
-          table(i) = (key, value)
-          _size = _size+1
-          return
-        }
+    findIndex(key, hcode, true) match {
+      case Some((-1, emptySlotIdx)) => {
+        // not present and empty slot was found
+        table(emptySlotIdx) = (key, value)
+        _size = _size+1
+        return
       }
+      case Some((idx, binStart)) => {
+        // update the value, size is the same.
+        table(idx) = (key, value)
+        return
+      }
+      case None => // need to evict and re-try the insert ...
     }
 
     // bin is full. so we:
@@ -106,11 +143,12 @@ extends Map[K,V] with Slf4JLogger
                 " attempts. Table size is " +  _size
       info(msg)
       throw new RuntimeException (msg);
+      // TODO: implement table grow and re-hashing if needed.
       // TODO: would be nice to report the original update params which caused
       // the failure.
     }
 
-    if (_size > 0.9*alloc) {
+    if (_size > 0.92*alloc) {
       warn("Inserting into a almost full table with size {} and alloc {}",
            _size, alloc)
     }
@@ -135,25 +173,17 @@ extends Map[K,V] with Slf4JLogger
   def elements = table.elements.filter { _ ne null }
 
   def -= (key : K) : Unit = {
-    // code is almost the same as get(), but do not want to abstract it to avoid
-    // runtime overhead.
-    val hcode = key.hashCode
-    for (hash <- hashes) {
-      val binStart = binStartIdx( hash(hcode) )
-      // go through the bins
-      for (i <- binStart until binStart+B) {
-        val tableVal = table(i)
-        if ((tableVal ne null) && tableVal._1 == key) {
-          // here is the only difference from get()
+    findIndex(key, key.hashCode, false) match {
+      case Some((idx, binStart)) => {
           // slide the subsequent entries in the bin down
-          for (j <- i until binStart+B-1) {
+          for (j <- idx until binStart+B-1) {
         	  table(j) = table(j+1)
           }
           // the last bin entry will be empty
           table(binStart+B-1) = null
-          return
-        }
+          _size = _size-1
       }
+      case (None) => debug("Do not have key {}", key)
     }
   }
 
