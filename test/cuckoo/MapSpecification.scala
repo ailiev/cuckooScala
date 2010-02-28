@@ -13,11 +13,10 @@
 package cuckoo
 
 import org.scalacheck.Commands
+import org.scalacheck.Prop
 import org.scalacheck.Gen
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
-
-import scala.util.logging._
 
 import scala.collection.immutable.LongMap
 import scala.collection.immutable.Map
@@ -25,11 +24,10 @@ import scala.collection.immutable.Map
 import scala.collection.mutable.{Map => MutableMap}
 
 /** ScalaCheck specification for a mutable Scala map. */
-object MapSpecification extends Commands with util.Slf4JLogger {
+class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
 
   // This is our system under test. All commands run against this instance.
-  val htable:MutableMap[Long,Int] =
-    new CHT[Long,Int](55) with ConsoleLogger;
+  val htable:MutableMap[Long,Int] = new CHT[Long,Int](alloc);
 
   // This is our state type that encodes the abstract state. The abstract state
   // should model all the features we need from the real state, the system
@@ -65,7 +63,9 @@ object MapSpecification extends Commands with util.Slf4JLogger {
     def nextState(s: State) = State(s.mappings.update(key, value))
 
     postConditions += {
-      case (s0, s1, table:MutableMap[Long,Int])	=> table.size == s1.mappings.size
+      case (s0, s1, table:MutableMap[Long,Int])	=>
+        Prop.propBoolean(table.size == s1.mappings.size) :|
+          "Table size: expected %d actual %d".format(s1.mappings.size, table.size)
       case _						=> false
     }
   }
