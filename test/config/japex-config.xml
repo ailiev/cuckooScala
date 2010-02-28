@@ -6,7 +6,6 @@
   <param name="japex.classPath" value="/kebab/minime/eclipse/configuration/org.eclipse.osgi/bundles/220/1/.cp/lib/scala-library.jar"/>
   <param name="japex.classPath" value="/home/sasho/lib/slf4j-api-1.5.10.jar"/>
   <param name="japex.classPath" value="/home/sasho/lib/slf4j-jdk14-1.5.10.jar"/>
-  <param name="japex.classPath" value="/home/sasho/lib/SizeOf.jar"/>
 
   <param name="japex.numberOfThreads" value="2"/>
 

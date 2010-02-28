@@ -8,8 +8,6 @@ import util.Slf4JLogger
 
 import scala.collection.mutable.{Map => MutableMap}
 
-import net.sourceforge.sizeof.SizeOf
-
 /** Japex driver for testing the get() method of a Scala mutable map. */
 abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 {
@@ -28,9 +26,6 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 
   override def prepare (testcase : TestCase) : Unit =
     {
-      SizeOf.skipStaticField(true);
-      SizeOf.skipFlyweightObject(true);
- 
       capacity = testcase.getIntParam("tableCapacity")
       timedBatchSize = testcase.getIntParam("timedBatchSize")
       val loadFactor = testcase.getDoubleParam("loadFactor")
@@ -69,16 +64,6 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 
   override def finish (testcase : TestCase) : Unit =
 	  {
-	try {
-		val memSize = SizeOf.deepSizeOf(htable)
-		info("Map size is {}", memSize)
-		testcase.setParam(Constants.RESULT_UNIT, "KBs");
-		testcase.setLongParam(Constants.RESULT_VALUE, memSize/1024);
-	}
-	catch {
-	  case (ex : IllegalArgumentException) =>
-		info("SizeOf is not working, not recording map size", ex)
-	}
 
 	  }
 
