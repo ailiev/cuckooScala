@@ -1,3 +1,5 @@
+Scala implementation of Cuckoo hashing.
+
 Copyright (c) 2010, Alexander Iliev <alex.iliev@gmail.com>
 All rights reserved.
 
