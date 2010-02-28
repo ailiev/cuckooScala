@@ -1,3 +1,15 @@
+/*
+ * Scala implementation of Cuckoo hashing.
+ *
+ * Copyright (C) 2010, Alexander Iliev <alex.iliev@gmail.com>
+ *
+ * All rights reserved.
+ *
+ * This code is released under a BSD license.
+ * Please see LICENSE.txt for the full license and disclaimers.
+ *
+ */
+
 package cuckoo;
 
 import scala.collection.mutable.Map

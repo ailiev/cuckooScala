@@ -1,5 +1,17 @@
 package cuckoo.performance.japex
 
+/*
+ * Scala implementation of Cuckoo hashing.
+ *
+ * Copyright (C) 2010, Alexander Iliev <alex.iliev@gmail.com>
+ *
+ * All rights reserved.
+ *
+ * This code is released under a BSD license.
+ * Please see LICENSE.txt for the full license and disclaimers.
+ *
+ */
+
 import com.sun.japex.TestCase
 import com.sun.japex.TestCaseImpl
 import com.sun.japex.ParamsImpl
