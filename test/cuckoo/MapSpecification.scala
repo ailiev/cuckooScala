@@ -56,16 +56,18 @@ object MapSpecification extends Commands with util.Slf4JLogger {
   case class Put(key:Long, value:Int) extends Command {
 	debug(this.toString)
 
-    def run(s: State) = { info("Doing " + this); htable.update(key, value) }
+    def run(s: State) = {
+      info("Doing " + this)
+      htable.update(key, value)
+      htable
+    }
 
     def nextState(s: State) = State(s.mappings.update(key, value))
 
-    // if we want to define a precondition, we add a function that
-    // takes the current abstract state as parameter and returns a boolean
-    // that says if the precondition is fulfilled or not. In this case, we
-    // have no precondition so we just let the function return true. Obviously,
-    // we could have skipped adding the precondition at all.
-    preConditions += (s => true)
+    postConditions += {
+      case (s0, s1, table:MutableMap[Long,Int])	=> table.size == s1.mappings.size
+      case _						=> false
+    }
   }
 
   case class Get(key:Long) extends Command {
