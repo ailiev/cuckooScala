@@ -88,6 +88,11 @@ object MapSpecification extends Commands with util.Slf4JLogger {
       case (s0, s1, table:MutableMap[Long,Int]) => ! table.contains(key)
       case _                                    => false
     }
+
+    postConditions += {
+      case (s0, s1, table:MutableMap[Long,Int]) => table.size == s1.mappings.size
+      case _                                    => false
+    }
   }
 
   // This is our command generator. Given an abstract state, the generator
