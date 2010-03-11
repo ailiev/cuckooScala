@@ -40,7 +40,7 @@ extends Map[K,V] with Slf4JLogger
   debug("As = " + Arrays.toString(As));
   debug("Bs = " + Arrays.toString(Bs));
 
-  val hashes = new Array[(Int => Int)] (H)
+  // val hashes = new Array[(Int => Int)] (H)
 
   /** Entry will be null if no entry at that index. */
   var table = new Array[(K,V)](alloc)
@@ -53,19 +53,21 @@ extends Map[K,V] with Slf4JLogger
     // Dietzfelbinger strongly universal hash function, really a small variation on
     // a standard multiplicative hash
       // we have the hash return the bucket number.
-    hashes(i) = x => ( ( As(i) * x.abs.toLong + Bs(i) ) >>> 32 ).toInt % NUM_BUCKETS
+    // hashes(i) = x => ( ( As(i) * x.abs.toLong + Bs(i) ) >>> 32 ).toInt % NUM_BUCKETS
   }
 
-  def binStartIdx (hashValue:Int) = hashValue * B
+  private def hashF(hashNum:Int, x:Int)  =
+    ( ( As(hashNum) * x.toLong + Bs(hashNum) ) >>> 32 ).toInt % NUM_BUCKETS    
+
+  private def binStartIdx (hashValue:Int) = hashValue * B
 
 
   def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
 
     var i=0
-    while(i < hashes.size) {
-      val hash = hashes(i)
-      val binStart = binStartIdx( hash(hcode) )
+    while(i < H) {
+      val binStart = binStartIdx( hashF(i, hcode) )
 
       // go through the bins
       var binOff = 0
@@ -91,9 +93,8 @@ extends Map[K,V] with Slf4JLogger
     {
     var emptySlotIdx : Int = -1
     var i=0
-    while(i < hashes.size) {
-      val hash = hashes(i)
-      val binStart = binStartIdx( hash(hashcode) )
+    while(i < H) {
+      val binStart = binStartIdx( hashF(i, hashcode) )
 
       // go through the bins
       var binOff = 0
@@ -154,7 +155,7 @@ extends Map[K,V] with Slf4JLogger
     }
 
     // - select a bin at random, ie. using one of our hash functions at random
-    val binIdx = binStartIdx ( hashes(rand.nextInt(H)) (hcode) )
+    val binIdx = binStartIdx ( hashF(rand.nextInt(H), hcode) )
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
     val oldEntry = table(binIdx)
     debug ("Evicting " + oldEntry + " while inserting " + (key,value))

@@ -24,11 +24,9 @@ import scala.collection.immutable.Map
 import scala.collection.mutable.{Map => MutableMap}
 
 /** ScalaCheck specification for a mutable Scala map. */
-class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
-
-  // This is our system under test. All commands run against this instance.
-  val htable:MutableMap[Long,Int] = new CHT[Long,Int](alloc);
-
+class MapSpecification (htable:MutableMap[Long,Int])
+extends Commands with util.Slf4JLogger
+{
   // This is our state type that encodes the abstract state. The abstract state
   // should model all the features we need from the real state, the system
   // under test. We should leave out all details that aren't needed for
@@ -51,7 +49,7 @@ class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
   // Finally, we can also define a postcondition which verifies that the
   // system under test is in a correct state after the command exectution.
 
-  case class Put(key:Long, value:Int) extends Command {
+  case class Update(key:Long, value:Int) extends Command {
 	debug(this.toString)
 
     def run(s: State) = {
@@ -70,6 +68,15 @@ class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
     }
   }
 
+  /** Insert a new entry. */
+  case class Insert(override val key:Long, override val value:Int)
+  extends Update(key,value)
+  {
+    preConditions += {
+      case (State(mappings)) => ! mappings.contains(key)
+    }
+  }
+
   case class Get(key:Long) extends Command {
 	debug(this.toString)
 
@@ -80,6 +87,13 @@ class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
       case (s0, s1, r:Option[Int])	=> r == s1.mappings.get(key)
       case _						=> false
     }
+  }
+
+  /** Get on an absent key. */
+  case class GetAbsent(override val key:Long) extends Get(key) {
+    preConditions += {
+      case (State(mappings)) => ! mappings.contains(key)
+    }    
   }
 
   case class Remove(key:Long) extends Command {
@@ -112,30 +126,30 @@ class MapSpecification (alloc:Int) extends Commands with util.Slf4JLogger {
 
   def genCommand_get (mappings:Map[Long,Int]) : Gen[Get] =
     frequency ( (19, genExistingKey(mappings).map(Get)),
-                (1,  genKey.map(Get)) )
+                (1,  genKey.map(GetAbsent)) )
 
-  def genCommand_put (mappings:Map[Long,Int]) : Gen[Put] =
-    frequency ( (9, randPut),
-    			(1, repeatPut(mappings)) )
+  def genCommand_put (mappings:Map[Long,Int]) : Gen[Update] =
+    frequency ( (9, randInsert),
+    			(1, randUpdate(mappings)) )
 
   def genCommand_remove (mappings:Map[Long,Int]) : Gen[Remove] =
     frequency ( (19, genExistingKey(mappings).map(Remove)),
                 (1,  genKey.map(Remove)) )
 
-  def randPut = for {
+  def randInsert = for {
     key <- genKey
     value <- genValue
-  } yield (Put(key,value))
+  } yield (Insert(key,value))
 
   // scalacheck doesn't want to work with the whole number range, so trimming it some.
   def genKey = choose(Math.MIN_LONG/4, Math.MAX_LONG/2)
   def genValue = choose(Math.MIN_INT/4, Math.MAX_INT/2)
 
   /** An update of a random existing key */
-  def repeatPut (mappings:Map[Long,Int]) = for {
+  def randUpdate (mappings:Map[Long,Int]) = for {
       key <- genExistingKey(mappings)
       value <- genValue
-  } yield (Put(key,value))
+  } yield (Update(key,value))
 
   /** A random key from the given map */
   def genExistingKey[T] (mappings:Map[T,_]) = oneOf(mappings.keySet.toArray)

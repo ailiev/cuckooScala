@@ -30,7 +30,7 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 
   val rand = new scala.util.Random
 
-  var keys : Array[Long] = null
+  var keys : Array[Long] = _
 
   /** Subclass should define how to make the particular map. */
   def makeMap (capacity : Int, loadFactor : Float) :
@@ -46,9 +46,15 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
       		capacity, timedBatchSize)
 
       htable = makeMap (capacity, loadFactor.toFloat)
-
       keys = new Array(capacity)
 
+      prepareTestMap (htable, keys, capacity, loadFactor.toFloat)
+    }
+
+  def prepareTestMap
+  (map : MutableMap[Long,Int], keys : Array[Long],
+   capacity : Int, loadFactor : Float) =
+  {
       // fill up the table and the keys array
       val numKeys = (capacity.toDouble*loadFactor*0.98).toInt
       info ("Using map entries: " + numKeys)
@@ -56,8 +62,8 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
         val key = rand.nextLong
         htable.update(key, rand.nextInt)
         keys(i) = key
-      }
-    }
+      }    
+  }
 
   override def run (testcase : TestCase) : Unit =
     {
