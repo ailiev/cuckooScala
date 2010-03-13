@@ -37,6 +37,12 @@ extends Map[K,V] with Slf4JLogger
   val As = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
   val Bs = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
 
+  val A1 = rand.nextLong
+  val A2 = rand.nextLong
+
+  val B1 = rand.nextLong
+  val B2 = rand.nextLong
+
   debug("As = " + Arrays.toString(As));
   debug("Bs = " + Arrays.toString(Bs));
 
@@ -57,7 +63,7 @@ extends Map[K,V] with Slf4JLogger
   }
 
   private def hashF(hashNum:Int, x:Int)  =
-    ( ( As(hashNum) * x.toLong + Bs(hashNum) ) >>> 32 ).toInt % NUM_BUCKETS    
+    ( ( As(hashNum) * x.toLong + Bs(hashNum) ) >>> 33 ).toInt % NUM_BUCKETS    
 
   private def binStartIdx (hashValue:Int) = hashValue * B
 
