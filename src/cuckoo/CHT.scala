@@ -34,14 +34,10 @@ extends Map[K,V] with Slf4JLogger
   val rand = new scala.util.Random
 
   // the randomizing params for the hash functions.
-  val As = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
-  val Bs = Array (rand.nextLong,rand.nextLong).map(abs).map{_ / (Math.MAX_INT*2l)}
+  val As = Array (hashParam,hashParam)
+  val Bs = Array (hashParam,hashParam)
 
-  val A1 = rand.nextLong
-  val A2 = rand.nextLong
-
-  val B1 = rand.nextLong
-  val B2 = rand.nextLong
+  def hashParam = rand.nextLong.abs // / (Math.MAX_INT*2l)
 
   debug("As = " + Arrays.toString(As));
   debug("Bs = " + Arrays.toString(Bs));
@@ -63,7 +59,10 @@ extends Map[K,V] with Slf4JLogger
   }
 
   private def hashF(hashNum:Int, x:Int)  =
-    ( ( As(hashNum) * x.toLong + Bs(hashNum) ) >>> 33 ).toInt % NUM_BUCKETS    
+    ( ( ( ( As(hashNum) * x.toLong + Bs(hashNum) ) // randomize the input
+    		>>> 33 ) // back down to 32-bit non-negative int
+      * NUM_BUCKETS ) >>> 31	// normalize to the correct range. 
+    ).toInt
 
   private def binStartIdx (hashValue:Int) = hashValue * B
 
