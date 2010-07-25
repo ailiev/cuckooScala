@@ -12,7 +12,7 @@
 
 package cuckoo;
 
-import scala.collection.mutable.Map
+import scala.collection.mutable.{Map,MapLike}
 import scala.util.logging.Logged
 import Math.abs
 
@@ -20,8 +20,8 @@ import util.Slf4JLogger
 
 import java.util.Arrays
 
-class CHT[K <: AnyRef, V] (alloc : Int)
-extends Map[K,V] with Slf4JLogger
+class CHT[K:ClassManifest, V:ClassManifest] (alloc : Int)
+extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
 {
 
   val MAX_UPDATE_RECURSION=100
@@ -68,6 +68,8 @@ extends Map[K,V] with Slf4JLogger
   private def binStartIdx (hashValue:Int) = hashValue * B
 
 
+  override def empty () : CHT[K,V] = new CHT[K,V] (64)
+
   def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
 
@@ -109,7 +111,7 @@ extends Map[K,V] with Slf4JLogger
         val idx = binStart+binOff
         val tableKey = keysArr(idx)
         if (tableKey == key) return Some (idx, binStart)
-        if (findEmpty && emptySlotIdx == -1 && (tableKey eq null)) {
+        if (findEmpty && emptySlotIdx == -1 && (tableKey == null)) {
           // we use the first available empty slot when inserting
           emptySlotIdx = idx
         }
@@ -124,7 +126,12 @@ extends Map[K,V] with Slf4JLogger
     }
   }
 
-  def update(key:K, value:V) = updateHelper(key, value, 0);
+  override def update(key:K, value:V) = updateHelper(key, value, 0);
+
+  override def += (kv : (K,V)) :this.type = {
+	  updateHelper(kv._1, kv._2, 0)
+	  return this
+  }
 
   private def updateHelper (key:K, value:V, depth:Int) : Unit = {
     val hcode = key.hashCode
@@ -182,11 +189,11 @@ extends Map[K,V] with Slf4JLogger
     updateHelper (oldKey, oldVal, depth+1)
   }
 
-  def size () = _size
+  override def size () = _size
 
-  def elements = keysArr.toList.zip(valuesArr.toList).elements.filter { _ ne null }
+  override def iterator = keysArr.toList.zip(valuesArr.toList).iterator.filter { _ ne null }
 
-  def -= (key : K) : Unit = {
+  override def -= (key : K) : this.type = {
     findIndex(key, key.hashCode, false) match {
       case Some((idx, binStart)) => {
           // slide the subsequent entries in the bin down
@@ -197,8 +204,12 @@ extends Map[K,V] with Slf4JLogger
           // the last bin entry will be empty
           keysArr(binStart+B-1) = null.asInstanceOf[K]
           _size = _size-1
+          this
       }
-      case (None) => debug("Do not have key {}", key)
+      case (None) => {
+    	  debug("Do not have key {}", key)
+    	  this
+      }
     }
   }
 
