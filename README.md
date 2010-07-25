@@ -1,5 +1,16 @@
 # Scala Implementation of Cuckoo Hashing
 
+## Warning
+
+The test code is currently broken, in process of fixing. The main code builds fine though.
+
+## Building
+
+Use [sbt](http://code.google.com/p/simple-build-tool/) with Scala 2.8. Once you have an `sbt`
+script:
+
+    $ sbt update compile
+
 ## Implementation outline
 
 Follows the framework laid out by Erlingsson et. al:
