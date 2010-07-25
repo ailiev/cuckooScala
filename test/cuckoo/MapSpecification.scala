@@ -18,10 +18,12 @@ import org.scalacheck.Gen
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
 
-import scala.collection.immutable.LongMap
+import scala.collection.immutable.HashMap
 import scala.collection.immutable.Map
 
 import scala.collection.mutable.{Map => MutableMap}
+
+import java.lang.Long
 
 /** ScalaCheck specification for a mutable Scala map. */
 class MapSpecification (htable:MutableMap[Long,Int])
@@ -38,7 +40,7 @@ extends Commands with util.Slf4JLogger
   // initial state, and return the abstract version of that state.
   def initialState() = {
     htable.clear
-    State(LongMap.empty)
+    State(new HashMap[Long,Int])
   }
 
   // We define our commands as subtypes of the traits Command or SetCommand.
@@ -142,7 +144,7 @@ extends Commands with util.Slf4JLogger
   } yield (Insert(key,value))
 
   // scalacheck doesn't want to work with the whole number range, so trimming it some.
-  def genKey = choose(Math.MIN_LONG/4, Math.MAX_LONG/2)
+  def genKey = choose(Math.MIN_LONG/4, Math.MAX_LONG/2).map(Long.valueOf)
   def genValue = choose(Math.MIN_INT/4, Math.MAX_INT/2)
 
   /** An update of a random existing key */

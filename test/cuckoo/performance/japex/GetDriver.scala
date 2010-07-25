@@ -16,6 +16,8 @@ import com.sun.japex.JapexDriverBase;
 import com.sun.japex.TestCase;
 import com.sun.japex.Constants
 
+import java.lang.Long
+
 import util.Slf4JLogger
 
 import scala.collection.mutable.{Map => MutableMap}
@@ -26,7 +28,7 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
   var capacity : Int = 0
   var timedBatchSize : Int = 0
 
-  var htable : MutableMap[Long,Int] = null
+  var htable : MutableMap[java.lang.Long,Int] = null
 
   val rand = new scala.util.Random
 
@@ -34,7 +36,7 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
 
   /** Subclass should define how to make the particular map. */
   def makeMap (capacity : Int, loadFactor : Float) :
-    MutableMap[Long,Int]
+    MutableMap[java.lang.Long,Int]
 
   override def prepare (testcase : TestCase) : Unit =
     {
@@ -59,10 +61,15 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
       val numKeys = (capacity.toDouble*loadFactor*0.98).toInt
       info ("Using map entries: " + numKeys)
       for (i <- 0 until numKeys) {
-        val key = rand.nextLong
+        val key = Long.valueOf(rand.nextLong)
         htable.update(key, rand.nextInt)
         keys(i) = key
-      }    
+      }
+
+      // fill in the rest of the lookup keys
+      for (i <- 0 until capacity-numKeys) {
+        keys(numKeys + i) = keys(i)
+      }
   }
 
   override def run (testcase : TestCase) : Unit =

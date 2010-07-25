@@ -20,7 +20,7 @@ import util.Slf4JLogger
 
 import java.util.Arrays
 
-class CHT[K,V] (alloc : Int)
+class CHT[K <: AnyRef, V] (alloc : Int)
 extends Map[K,V] with Slf4JLogger
 {
 
@@ -45,7 +45,8 @@ extends Map[K,V] with Slf4JLogger
   // val hashes = new Array[(Int => Int)] (H)
 
   /** Entry will be null if no entry at that index. */
-  var table = new Array[(K,V)](alloc)
+  var keysArr = new Array[K](alloc)
+  var valuesArr = new Array[V](alloc)
 
   var _size = 0
 
@@ -77,8 +78,9 @@ extends Map[K,V] with Slf4JLogger
       // go through the bins
       var binOff = 0
       while (binOff < B) {
-        val tableVal = table(binStart+binOff)
-        if ((tableVal ne null) && tableVal._1 == key) return Some (tableVal._2)
+        val idx = binStart+binOff
+        val tableVal = keysArr(idx)
+        if (tableVal == key) return Some (valuesArr(idx))
         binOff = binOff+1
       }
       i = i+1
@@ -105,9 +107,9 @@ extends Map[K,V] with Slf4JLogger
       var binOff = 0
       while (binOff < B) {
         val idx = binStart+binOff
-        val tableVal = table(idx)
-        if ((tableVal ne null) && tableVal._1 == key) return Some (idx, binStart)
-        if (findEmpty && emptySlotIdx == -1 && (tableVal eq null)) {
+        val tableKey = keysArr(idx)
+        if (tableKey == key) return Some (idx, binStart)
+        if (findEmpty && emptySlotIdx == -1 && (tableKey eq null)) {
           // we use the first available empty slot when inserting
           emptySlotIdx = idx
         }
@@ -130,13 +132,15 @@ extends Map[K,V] with Slf4JLogger
     findIndex(key, hcode, true) match {
       case Some((-1, emptySlotIdx)) => {
         // not present and empty slot was found
-        table(emptySlotIdx) = (key, value)
+        keysArr(emptySlotIdx) = key
+        valuesArr(emptySlotIdx) = value
         _size = _size+1
         return
       }
       case Some((idx, binStart)) => {
         // update the value, size is the same.
-        table(idx) = (key, value)
+        keysArr(idx) = key
+        valuesArr(idx) = value
         return
       }
       case None => // need to evict and re-try the insert ...
@@ -162,31 +166,36 @@ extends Map[K,V] with Slf4JLogger
     // - select a bin at random, ie. using one of our hash functions at random
     val binIdx = binStartIdx ( hashF(rand.nextInt(H), hcode) )
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
-    val oldEntry = table(binIdx)
-    debug ("Evicting " + oldEntry + " while inserting " + (key,value))
+    val oldKey = keysArr(binIdx)
+    val oldVal = valuesArr(binIdx)
+    debug ("Evicting " + (oldKey, oldVal) + " while inserting " + (key,value))
     // - slide the other entries up
     for (i <- 0 until B-1) {
-      table(binIdx+i) = table(binIdx+i+1)
+      keysArr(binIdx+i) = keysArr(binIdx+i+1)
+      valuesArr(binIdx+i) = valuesArr(binIdx+i+1)
     }
     // - insert the new (key,value) at the end of the bin
-    table(binIdx+B-1) = (key,value)
+    keysArr(binIdx+B-1) = key
+    valuesArr(binIdx+B-1) = value
+
     // - recursively insert (k,v) into the table.
-    updateHelper (oldEntry._1, oldEntry._2, depth+1)
+    updateHelper (oldKey, oldVal, depth+1)
   }
 
   def size () = _size
 
-  def elements = table.elements.filter { _ ne null }
+  def elements = keysArr.toList.zip(valuesArr.toList).elements.filter { _ ne null }
 
   def -= (key : K) : Unit = {
     findIndex(key, key.hashCode, false) match {
       case Some((idx, binStart)) => {
           // slide the subsequent entries in the bin down
           for (j <- idx until binStart+B-1) {
-        	  table(j) = table(j+1)
+        	  keysArr(j) = keysArr(j+1)            
+        	  valuesArr(j) = valuesArr(j+1)
           }
           // the last bin entry will be empty
-          table(binStart+B-1) = null
+          keysArr(binStart+B-1) = null.asInstanceOf[K]
           _size = _size-1
       }
       case (None) => debug("Do not have key {}", key)
@@ -194,8 +203,8 @@ extends Map[K,V] with Slf4JLogger
   }
 
   override def clear = {
-    for (i <- 0 until table.size) {
-      table(i) = null
+    for (i <- 0 until keysArr.size) {
+      keysArr(i) = null.asInstanceOf[K]
     }
     _size = 0
   }
