@@ -19,7 +19,7 @@ import com.sun.japex.ParamsImpl
 // Doing this to get the SizeOf info, as that doesn't work when run under
 // japex. Japex's custom classloader loses the static Instrumentaion field set by
 // the SizeOf class in its premain callback
-object JapexDirectRun extends Application
+object JapexDirectRun extends App
 {
   // val driver = new CuckooGetDriver
   val driver = new JavaHashMapGetDriver
