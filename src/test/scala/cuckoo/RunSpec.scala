@@ -17,6 +17,6 @@ object RunSpec extends Application {
   import org.scalacheck._  
   import org.scalacheck.Test._  
 
-  val params = Params(2000, 7000, 1, 90, new java.util.Random(), 1, 1)  
-  new MapSpecification(new CHT[java.lang.Long,Int] (55)).check(params)
+  val params = Params(2000, 7000, 1, 90, new java.util.Random(), 1, new ConsoleReporter(1))
+  new MapSpecification(new cuckoo.CHT[java.lang.Long,Int] (55)).check(params)
 }
