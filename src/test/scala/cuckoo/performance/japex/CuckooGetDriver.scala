@@ -1,5 +1,5 @@
 package cuckoo.performance.japex
 
 class CuckooGetDriver extends GetDriver {
-    def makeMap (capacity : Int, loadFactor : Float) = new CHT(capacity)
+    def makeMap (capacity : Int, loadFactor : Float) = new cuckoo.CHT(capacity)
 }
