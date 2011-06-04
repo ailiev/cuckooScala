@@ -20,7 +20,7 @@ import util.Slf4JLogger
 
 import java.util.Arrays
 
-class CHT[K:ClassManifest, V:ClassManifest] (alloc : Int)
+class CHT[K <: AnyRef :ClassManifest, V:ClassManifest] (alloc : Int)
 extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
 {
 
@@ -45,7 +45,7 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
   // val hashes = new Array[(Int => Int)] (H)
 
   /** Entry will be null if no entry at that index. */
-  var keysArr = new Array[K](alloc)
+  var keysArr = new Array[AnyRef](alloc)
   var valuesArr = new Array[V](alloc)
 
   var _size = 0
@@ -173,7 +173,7 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
     // - select a bin at random, ie. using one of our hash functions at random
     val binIdx = binStartIdx ( hashF(rand.nextInt(H), hcode) )
     // - remove the oldest entry in it, which is in first idx of the bin --> (k,v)
-    val oldKey = keysArr(binIdx)
+    val oldKey:K = keysArr(binIdx).asInstanceOf[K]
     val oldVal = valuesArr(binIdx)
     debug ("Evicting " + (oldKey, oldVal) + " while inserting " + (key,value))
     // - slide the other entries up
@@ -191,7 +191,9 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
 
   override def size () = _size
 
-  override def iterator = keysArr.toList.zip(valuesArr.toList).iterator.filter { _ ne null }
+  override def iterator = {
+    keysArr.map(_.asInstanceOf[K]).zip(valuesArr).iterator.filter( _._1 ne null )
+  }
 
   override def -= (key : K) : this.type = {
     findIndex(key, key.hashCode, false) match {
