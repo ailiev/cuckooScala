@@ -60,7 +60,7 @@ extends Commands with util.Slf4JLogger
       htable
     }
 
-    def nextState(s: State) = State(s.mappings.update(key, value))
+    def nextState(s: State) = State(s.mappings + ((key, value)))
 
     postConditions += {
       case (s0, s1, table:MutableMap[Long,Int])	=>
@@ -154,10 +154,13 @@ extends Commands with util.Slf4JLogger
   } yield (Update(key,value))
 
   /** A random key from the given map */
-  def genExistingKey[T] (mappings:Map[T,_]) = oneOf(mappings.keySet.toArray)
+  def genExistingKey[T:ClassManifest] (mappings:Map[T,_]) : Gen[T] = {
+    val arr = mappings.keySet.toArray
+    oneOf(arr)
+  }
 
   // a variation of Gen.oneOf
-  def oneOf[T](gs: Seq[T]) = if(gs.isEmpty) fail else for {
+  def oneOf[T](gs: Array[T]) : Gen[T] = if(gs.isEmpty) fail else for {
     i <- choose(0,gs.length-1)
     x <- gs(i)
   } yield x
