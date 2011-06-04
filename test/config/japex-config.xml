@@ -1,32 +1,32 @@
 <testSuite name="Scala mutable map test suite"
            xmlns="http://www.sun.com/japex/testSuite">
 
-  <param name="libraryDir" value="lib"/>
-  <param name="japex.classPath" value="bin"/>
-  <param name="japex.classPath" value="/kebab/minime/eclipse/configuration/org.eclipse.osgi/bundles/220/1/.cp/lib/scala-library.jar"/>
-  <param name="japex.classPath" value="/home/sasho/lib/slf4j-api-1.5.10.jar"/>
-  <param name="japex.classPath" value="/home/sasho/lib/slf4j-jdk14-1.5.10.jar"/>
+  <!-- 
+  <param name="japex.classPath" value="target/scala_2.9.0/classes"/>
+  <param name="japex.classPath" value="target/scala_2.9.0/test-classes"/>  
+  -->
+  <param name="japex.classPath" value="bin"/>  
+  <param name="japex.classPath" value="project/boot/scala-2.9.0/lib/scala-library.jar"/>
+  <param name="japex.classPath" value="lib_managed/scala_2.9.0/compile/*.jar"/>
+  <param name="japex.classPath" value="lib_managed/scala_2.9.0/test/*.jar"/>
 
-  <param name="japex.numberOfThreads" value="2"/>
+  <param name="japex.numberOfThreads" value="1"/>
 
   <param name="japex.warmupTime" value="10"/>
-  <param name="japex.runTime" value="40"/>
+  <param name="japex.runTime" value="30"/>
 
-  <!-- looks like the driver name has to be the class name -->
-  <driver name="cuckoo.performance.japex.CuckooGetDriver">
-    <param name="Description" value="Driver for map lookups"/>
-    <!--
-    <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
-    -->
+  <driver name="Cuckoo">
+    <param name="Description" value="Driver for Cuckoo"/>
+    <param name="japex.driverClass" value="cuckoo.performance.japex.CuckooGetDriver"/>
   </driver>
 
-  <driver name="cuckoo.performance.japex.JavaHashMapGetDriver">
-    <param name="Description" value="Driver for map lookups"/>
-    <param name="japex.DriverClass" value="cuckoo.performance.japex.GetDriver"/>
+  <driver name="JavaHashMap">
+    <param name="description" value="Driver for Java HashMap"/>
+    <param name="japex.driverClass" value="cuckoo.performance.japex.JavaHashMapGetDriver"/>
   </driver>
 
-    <param name="timedBatchSize" value="500" />
-    <param name="loadFactor" value="0.92" />    
+  <param name="timedBatchSize" value="500" />
+  <param name="loadFactor" value="0.92" />    
 
   <testCase name="medium size">
     <param name="tableCapacity" value="20000"/>
