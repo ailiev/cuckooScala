@@ -21,22 +21,28 @@ import java.lang.Long
 import util.Slf4JLogger
 
 import scala.collection.mutable.{Map => MutableMap}
+import java.{lang => jl}
 
 /** Japex driver for testing the get() method of a Scala mutable map. */
-abstract class GetDriver extends JapexDriverBase with Slf4JLogger
+abstract class GetDriver[MapT <: AnyRef] extends JapexDriverBase with Slf4JLogger
 {
+  type KeyT = jl.Long
+  type ValT = jl.Integer
+  
   var capacity : Int = 0
   var timedBatchSize : Int = 0
 
-  var htable : MutableMap[java.lang.Long,Int] = null
+  var htable : MapT = null.asInstanceOf[MapT]
 
   val rand = new scala.util.Random
 
-  var keys : Array[Long] = _
+  var keys : Array[KeyT] = _
 
   /** Subclass should define how to make the particular map. */
-  def makeMap (capacity : Int, loadFactor : Float) :
-    MutableMap[java.lang.Long,Int]
+  def makeMap (capacity : Int, loadFactor : Float) : MapT
+  
+  def mapget(map:MapT, key:KeyT) : ValT
+  def mapset(map:MapT, key:KeyT, value:ValT) : Unit
 
   override def prepare (testcase : TestCase) : Unit =
     {
@@ -54,7 +60,7 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
     }
 
   def prepareTestMap
-  (map : MutableMap[Long,Int], keys : Array[Long],
+  (map : MapT, keys : Array[KeyT],
    capacity : Int, loadFactor : Float) =
   {
       // fill up the table and the keys array
@@ -62,7 +68,7 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
       info ("Using map entries: " + numKeys)
       for (i <- 0 until numKeys) {
         val key = Long.valueOf(rand.nextLong)
-        htable.update(key, rand.nextInt)
+        mapset(map, key, rand.nextInt)
         keys(i) = key
       }
 
@@ -79,9 +85,9 @@ abstract class GetDriver extends JapexDriverBase with Slf4JLogger
       var i=0
       while ( i < timedBatchSize ) {
 
-        val value = htable.get(keys(keyIdx))
+        val value = mapget(htable, keys(keyIdx))
 
-        goldPot = goldPot + value.getOrElse(0)
+        goldPot = goldPot + value
     	keyIdx = (keyIdx + 1) % capacity
     	i = i+1
       }
