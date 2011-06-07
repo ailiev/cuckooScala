@@ -70,7 +70,7 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
 
   override def empty () : CHT[K,V] = new CHT[K,V] (64)
 
-  def get  (key : K) : Option[V] = {
+  override def get  (key : K) : Option[V] = {
     val hcode = key.hashCode
 
     var i=0
@@ -192,7 +192,11 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
   override def size () = _size
 
   override def iterator = {
-    keysArr.map(_.asInstanceOf[K]).zip(valuesArr).iterator.filter( _._1 ne null )
+    keysArr
+    	.map(_.asInstanceOf[K])	// required to satisfy typechecker, as the array type is AnyRef
+    	.zip(valuesArr)
+    	.iterator
+    	.filter( _._1 ne null )
   }
 
   override def -= (key : K) : this.type = {
@@ -217,7 +221,7 @@ extends Map[K,V] with MapLike[K,V,CHT[K,V]] with Slf4JLogger
 
   override def clear = {
     for (i <- 0 until keysArr.size) {
-      keysArr(i) = null.asInstanceOf[K]
+      keysArr(i) = null
     }
     _size = 0
   }
